@@ -30,6 +30,7 @@
       color:var(--sbx-text);
     }
     .card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(2,6,23,0.08);min-height:var(--card-min-h)}
+    /* Step pill: clearer */
     .step-badge{
       display:inline-flex;align-items:center;gap:10px;
       padding:7px 14px;border-radius:999px;
@@ -40,11 +41,12 @@
       -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     }
     .step-arrow{font-size:30px;line-height:1;color:#e6f0ff;transform:translateY(-1px)}
+    /* Uniform checkbox/radio helpers */
     input[type="checkbox"], input[type="radio"]{accent-color:var(--sbx-blue);cursor:pointer}
     .chk{width:20px;height:20px;display:inline-block;vertical-align:top}
-    .sub-check{width:18px;height:18px;display:inline-block;vertical-align:top}
+    .sub-check{width:16px;height:16px;display:inline-block;vertical-align:top} /* intentionally smaller (e.g., formation) */
     .radio-lg{width:22px;height:22px}
-    .vat-chk{width:18px;height:18px}
+    .vat-chk{width:18px;height:18px} /* compact VAT box */
     select, input[type="number"], input[type="text"], input[type="date"]{font-size:15px}
 
     /* Force uniform sizing inside Ltd inclusions block */
@@ -52,6 +54,7 @@
       width:20px;height:20px;min-width:20px;min-height:20px;
       appearance:auto;-webkit-appearance:auto;line-height:1;display:inline-block;
     }
+    .inc-ltd input.sub-check{width:16px !important;height:16px !important;} /* keep formation smaller */
 
     @media (max-width: 1023px){
       .arrow-override-down .step-arrow::after{content:"↓"}
@@ -62,6 +65,8 @@
       .print-area{box-shadow:none!important;padding:0!important}
       body{background:#fff}
     }
+
+    /* tiny tooltip for locked tick */
     .locked:hover::after{
       content:"This is standard in limited company packages";
       position:absolute;left:0;top:100%;margin-top:6px;
@@ -137,7 +142,7 @@
       const [ltdBookkeepingDone,setLtdBookkeepingDone]=React.useState("done"); // "done" | "not"
 
       // Counts
-      const [employees,setEmployees]=React.useState(1); // Ltd: ADDITIONAL employees count (beyond 1–2 if payroll)
+      const [employees,setEmployees]=React.useState(1); // NOTE: for Limited this means "additional beyond 1–2" when payroll is ticked
       const [spvProperties,setSpvProperties]=React.useState(1);
       const [personalProperties,setPersonalProperties]=React.useState(1); // landlord default = 1
 
@@ -246,7 +251,7 @@
         }
       },[companyType, who]);
 
-      // If Standard + Under £30k, behave like Start-up for pricing (payroll stays manual)
+      // Standard + Under £30k behaves like Start-up for pricing (payroll stays manual)
       React.useEffect(()=>{
         if(who==="limited" && companyType==="standard" && tierKey==="u30"){
           setIncludePayroll(false);
@@ -312,9 +317,9 @@
       return Math.max(0, months);
     }
 
-    // CIS monthly pricing by pairs: 1–2=15, 3–4=25, 5–6=35, +10 per extra pair
+    // CIS monthly pricing: 0 (nil) = 15, 1–2=15, 3–4=25, 5–6=35, +10 per extra pair
     const cisMonthlyCost = (n)=>{
-      if(n<=0) return 15; // nil return still £15/mo
+      if(n<=0) return 15;
       const buckets = Math.ceil(n/2);
       return 5 + 10*buckets;
     };
@@ -349,8 +354,8 @@
             monthly.push({label:"Start-up Company Package",note:"Under £30k revenue · YE accounts & CT return · 1 director SA · CS filing (we cover £34) · QuickBooks · Bookkeeping",amount:base});
             if(s.includePayroll){
               monthly.push({label:"Payroll (1–2)",amount:10});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
+              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*Math.max(0,s.employees)});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
             if(s.vatRegistered && s.vatReturns){
               monthly.push({label:"VAT Returns (averaged monthly)",amount:25});
@@ -364,8 +369,8 @@
             });
             if(s.includePayroll){
               monthly.push({label:"Payroll (1–2)", amount:10});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
+              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*Math.max(0,s.employees)});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
             if(s.includeSingleSA){
               monthly.push({label:"Single director Self Assessment (SPV add-on)", amount:10});
@@ -374,7 +379,7 @@
               monthly.push({label:"VAT Returns (averaged monthly)",amount:25});
             }
           } else {
-            // Standard company package: base £90 (no payroll included)
+            // Standard company package: base £90 (payroll optional)
             const base = 90;
             monthly.push({
               label:"Standard Company Package",
@@ -383,8 +388,8 @@
             });
             if(s.includePayroll){
               monthly.push({label:"Payroll (1–2)", amount:10});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
+              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*Math.max(0,s.employees)});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
             if(!s.includeBookkeeping) monthly.push({label:"Bookkeeping removed", amount:-20});
             if(!s.includeSingleSA)    monthly.push({label:"Single director SA removed", amount:-10});
@@ -421,12 +426,12 @@
           if(s.employees>0) monthly.push({label:"Payroll add-on",amount:10*s.employees});
         }
 
-        // CIS monthly (Contractor)
+        // CIS monthly (Contractor) — includes nil returns at £15
         if(s.isTrades && s.isCISContractor && s.cisMonthlyReturns){
           const amt = cisMonthlyCost(s.cisSubbies);
           monthly.push({
-            label:"CIS Monthly Returns (contractor)",
-            note:`for ${s.cisSubbies} subcontractor${s.cisSubbies===1?'':'s'}`,
+            label: s.cisSubbies<=0 ? "CIS Monthly Returns (nil return submissions)" : "CIS Monthly Returns (contractor)",
+            note: s.cisSubbies<=0 ? undefined : `for ${s.cisSubbies} subcontractor${s.cisSubbies===1?'':'s'}`,
             amount:amt
           });
         }
@@ -449,18 +454,19 @@
         const tmpMonthlyTotal = monthly.reduce((a,b)=>a+(b.amount||0),0);
 
         if(ye < now){
-          // Past year-end: one-off compliance
+          // PAST year-end: one-off compliance only (no specifics exposed)
           const monthsFactor = (s.ltdBookkeepingDone==="done") ? 7.5 : 10;
           if(tmpMonthlyTotal>0){
             oneoff.push({
-              label:`Year-end compliance package (${s.ltdBookkeepingDone==="done"?"bookkeeping done":"no bookkeeping"} for that year)`,
-              note:`Charged once for the year just ended`,
+              label:`Year-end compliance package`,
+              note:`Charged once for the year just ended (based on your monthly package and bookkeeping status).`,
               amount:monthsFactor * tmpMonthlyTotal
             });
           }
         } else {
-          // Future year-end: current-year catch-up beyond first 4 months
-          const start = new Date(ye); start.setFullYear(start.getFullYear()-1);
+          // FUTURE year-end: current-year catch-up (beyond first 4 months)
+          const start = new Date(ye);
+          start.setFullYear(start.getFullYear()-1);
           const elapsed = Math.max(0, monthsBetween(start, now));
           const billable = Math.max(0, elapsed - 4);
           if(billable>0 && tmpMonthlyTotal>0){
@@ -481,7 +487,7 @@
         }
       }
 
-      // Individual one-offs — SA scales from £200
+      // Individual one-offs — SA scales from £200 with tier multipliers
       if(s.who==="individual" && s.isSoleBusiness && s.saSoleBusiness){
         const base = 200;
         const sa = Math.round(base * (REVENUE_TIERS.find(t=>t.key===s.tierKey)?.multiplier || 1));
@@ -504,7 +510,7 @@
       if(s.who==="partnership" && s.numPartnersSA>0){
         oneoff.push({label:`Partners' Self Assessments ×${s.numPartnersSA}`,note:"Billed initially; from year two this is reflected in the monthly package.",amount:150*s.numPartnersSA});
       }
-      if(s.who==="limited" && s.includeSingleSA && s.additionalDirectorSAs>0){
+      if(s.who==="limited" && s.additionalDirectorSAs>0){
         oneoff.push({label:`Additional directors (Self Assessment) ×${s.additionalDirectorSAs}`,amount:120*s.additionalDirectorSAs});
       }
       if(s.isTrades && s.isCISSubcontractor && s.trackCISStatements){
@@ -626,7 +632,7 @@
                   </label>
                 </div>
 
-                {/* Year end + SPV properties side-by-side */}
+                {/* Year end + SPV properties side-by-side, spaced */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm mb-1">Company year end date</label>
@@ -637,17 +643,18 @@
                     {!!s.yearEnd && new Date(s.yearEnd) < new Date() && !s.dormant && (
                       <div className="mt-2">
                         <label className="block text-sm mb-1">Bookkeeping status for that year</label>
-                        <select value={s.ltdBookkeepingDone} onChange={e=>s.setLtdBookkeepingDone(e.target.value)} className="w-full md:w-[360px] border rounded-xl px-3 py-2 text-sm">
+                        <select value={s.ltdBookkeepingDone} onChange={e=>s.setLtdBookkeepingDone(e.target.value)} className="w-full md:w-[340px] border rounded-xl px-3 py-2 text-sm">
                           <option value="done">We’ve done our bookkeeping for that year</option>
                           <option value="not">We haven’t done bookkeeping for that year</option>
                         </select>
+                        <p className="text-xs text-[var(--sbx-mute)] mt-1">Used to set the one-off compliance charge.</p>
                       </div>
                     )}
                   </div>
                   {s.companyType==="property" && (
-                    <div>
+                    <div className="md:ml-2">
                       <label className="block text-sm mb-1">Number of properties in SPV</label>
-                      <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Number(e.target.value)||0)} className="w-full md:w-[220px] border rounded-xl px-3 py-2"/>
+                      <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Number(e.target.value)||0)} className="w-full md:w-[200px] border rounded-xl px-3 py-2"/>
                     </div>
                   )}
                 </div>
@@ -694,6 +701,7 @@
                     <input className="radio-lg" type="radio" name="indType" checked={!s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(false)}/> I need a Self-Assessment for other untaxed income (investments/other)
                   </label>
                 </div>
+                {/* Trades toggle OUTSIDE the box */}
                 {s.isSoleBusiness && (
                   <label className="flex items-center gap-2 text-sm mt-2">
                     <input className="chk" type="checkbox" checked={s.isTrades} onChange={e=>s.setIsTrades(e.target.checked)}/> Trades / construction business
@@ -797,7 +805,7 @@
             ? "Employees on payroll (include salaried LLP partners)"
             : "Employees on payroll";
         }
-        if(s.who==="limited") return "Additional employees on payroll (beyond 1–2 if payroll is ticked)";
+        if(s.who==="limited") return "Additional employees on payroll (beyond 1–2)";
         return "Employees on payroll";
       })();
 
@@ -898,7 +906,7 @@
             </div>
 
             <div className="space-y-3">
-              {/* PARTNERS needing SA */}
+              {/* PARTNERS needing SA (top-right) */}
               {s.who==="partnership" && (
                 <div>
                   <label className="block text-sm mb-1">Partners requiring Self Assessment</label>
@@ -908,34 +916,26 @@
               )}
 
               {/* Employees input:
-                  - Limited: only when payroll is ticked (additional employees beyond 1–2)
-                  - Others (partnership/sole trader business): always shown */}
+                 - Limited: only when payroll is ticked, and it means "additional beyond 1–2"
+                 - Non-limited (except landlord or SA-only): always visible, total employees */}
               {!(s.who==="landlord" || (s.who==="individual" && !s.isSoleBusiness)) && (
-                s.who==="limited"
-                  ? (s.includePayroll && (
-                      <div>
-                        <label className="block text-sm mb-1">{payrollLabel}</label>
-                        <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                      </div>
-                    ))
-                  : (
-                      <div>
-                        <label className="block text-sm mb-1">{payrollLabel}</label>
-                        <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                      </div>
-                    )
+                (s.who!=="limited" || (s.who==="limited" && s.includePayroll)) && (
+                  <div>
+                    <label className="block text-sm mb-1">{payrollLabel}</label>
+                    <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                  </div>
+                )
               )}
 
               {s.who==="limited" && (
                 <>
-                  {/* Additional directors SA: only show if Single Director SA is ticked */}
+                  {/* Additional directors SA shown only if single director SA is included */}
                   {s.includeSingleSA && (
                     <div>
                       <label className="block text-sm mb-1">Additional directors requiring Self Assessment</label>
                       <input type="number" min="0" value={s.additionalDirectorSAs} onChange={e=>s.setAdditionalDirectorSAs(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
                     </div>
                   )}
-
                   <label className="flex items-start gap-3 text-sm">
                     <input className="sub-check" type="checkbox" checked={s.formation} onChange={e=>s.setFormation(e.target.checked)} />
                     <span><span className="font-medium">Company formation</span><br/><span className="text-[var(--sbx-mute)]">Free with our monthly packages (we recharge the £50 Companies House fee to you after).</span></span>
@@ -1035,25 +1035,25 @@
       let areas = "";
       if (s.who==="individual" && !s.isSoleBusiness) {
         areas = `"s1 s2"
-                 "s6 s5"`;
+                 "s6 s5"`;   /* s2 ↓ s5, s5 ← s6 (snake backwards for two rows) */
       } else if (s.who==="landlord") {
         areas = `"s1 s2"
                  "s5 s4"
-                 "s6 ."`; 
+                 "s6 ."`; /* s2 ↓ s4, s4 ← s5, s5 ↓ s6 */
       } else if(showCIS && showRevenue){
         areas = `"s1 s2"
                  "s3 s2a"
                  "s4 s5"
-                 "s6 ."`;
+                 "s6 ."`; /* classic snake */
       } else if(showCIS && !showRevenue){
         areas = `"s1 s2"
                  "s4 s2a"
                  "s5 ."
-                 "s6 ."`;
+                 "s6 ."`; /* snake continues */
       } else if(!showCIS && showRevenue){
         areas = `"s1 s2"
                  "s4 s3"
-                 "s5 s6"`;
+                 "s5 s6"`;  /* ensures 4 ↓ 5 and 5 → 6 */
       } else {
         areas = `"s1 s2"
                  "s4 ."
